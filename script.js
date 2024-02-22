@@ -13,6 +13,7 @@ function createCell(y,x){
             cellValue = newValue;
             return true;
         }
+        return false;
     };
 
     return { checkValue, setValue, posY, posX };
@@ -28,20 +29,15 @@ const gameBoard = (function (rowSize) {
         }
     }
 
-
-    // //this for testing row matches
-    // for(let i = 0; i < rowSize; i++){
-    //     cellGrid[i][1].setValue("a");
-    //     cellGrid[i][2].setValue("o");
-    // }
-    // cellGrid[0][2].setValue("a");
-    // cellGrid[1][1].setValue("a");
-    // cellGrid[2][0].setValue("a");
-    // cellGrid[1][0].setValue("x");
-    // cellGrid[1][1].setValue("o");
-    // cellGrid[1][2].setValue("x");
-    // cellGrid[0][1].setValue("o");
-    // cellGrid[2][1].setValue("o");
+    //there was probably a smarter way to set up a tie check but HERE WE ARE
+    let filledCells = 0;
+    const checkTie = function (){
+        filledCells += 1;
+        if(filledCells == rowSize * rowSize){
+            return true;
+        }
+        return false;
+    }
 
 
     const checkRow = function(cell){
@@ -98,13 +94,28 @@ const gameBoard = (function (rowSize) {
     //this should only check a newly turned tile, so cells with value="-"/""/"w/e" shouldn't trigger match
     //(even though they could)
     const checkForMatches = function(cell){
-        // console.log(checkRow(cell) || checkCol(cell) || checkDiagBottomTop(cell) || checkDiagTopBottom(cell));
         return(checkRow(cell) || checkCol(cell) || checkDiagBottomTop(cell) || checkDiagTopBottom(cell));
     }
 
-    // checkForMatches(cellGrid[1][1]);  
 
-    
+    const fillCell = function(y,x,value){
+        let cell = cellGrid[y][x];
+        if(cell.setValue(value)){
+            printToConsole();
+            if(checkForMatches(cell)){
+                return "win";
+            }
+            else{
+                if(checkTie()){
+                    return "tie";
+                }
+            }
+        }
+        else{
+            return "full";
+        }
+    }
+
 
     const printToConsole = function(){
         let result = "";
@@ -119,12 +130,44 @@ const gameBoard = (function (rowSize) {
         console.log(result);
     }
 
-    return {printToConsole};
+    return {printToConsole, fillCell};
 })(3);
 
 
-gameBoard.printToConsole();
+//gameBoard.printToConsole();
 
 
 
 
+const turnManager = (function (){
+    const players = ["x","o"];
+    let turn = 0;
+
+
+    const takeTurn = function() {
+        let x = Math.floor(Math.random() * 3);
+        let y = Math.floor(Math.random() * 3);
+    
+        
+        switch(gameBoard.fillCell(y,x,players[turn])){
+            case "win": 
+                console.log("player " + players[turn] + " win")
+                return;
+            case "tie":
+                console.log("tied");
+                return;
+            case "full":
+                takeTurn();
+                return;
+            default:
+                turn == 0 ? turn = 1 : turn = 0;
+                takeTurn();
+                return;
+        }
+
+        
+    }
+
+    //starts the first turn
+    takeTurn();
+}())
