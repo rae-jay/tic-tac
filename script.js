@@ -16,10 +16,13 @@ function createCell(y,x){
         }
         return false;
     };
-
     //visualManager.makeBox(y,x);
 
-    return { checkValue, setValue, posY, posX };
+    const resetCell = function(){
+        cellValue = "-";
+    }
+
+    return { checkValue, setValue, resetCell, posY, posX };
 }
 
 
@@ -144,7 +147,17 @@ const gameBoard = (function (rowSize) {
         console.log(result);
     }
 
-    return {printToConsole, fillCell};
+
+    const resetBoard = function(){
+        filledCells = 0;
+        for(let y = 0; y < gridSize; y++){
+            for(let x = 0; x < gridSize; x++){
+                cellGrid[y][x].resetCell();
+            }
+        }
+    }
+
+    return {printToConsole, fillCell, resetBoard, };
 })(gridSize);
 
 
@@ -154,14 +167,35 @@ const gameBoard = (function (rowSize) {
 //k i don't quite know how visuals and the general manager are going to pass back and forth without oruborbrororusing
 //but that should be somewhat manageable
 const visualManager = (function () {
+    const whenPlaying = document.querySelector(".whenPlaying");
     const boxGrid = document.querySelector(".gameBoard");
+    const boxes = [];
     const gameText = document.querySelector(".gameText");
+
+    whenPlaying.style.display = "none";
+
+    const gameSetup = document.querySelector(".gameSetup");
+    const playerInput1 = document.getElementById("playerOneName");
+    const playerInput2 = document.getElementById("playerTwoName");
+
+
+
+    const setupGame = function(){
+        gameSetup.style.display = "none";
+        whenPlaying.style.display = "flex";
+
+        gameText.textContent = playerInput1.value + " start!";
+
+        return [playerInput1.value, playerInput2.value];
+    }
+
 
     //im wanting to pass a function in as a third thing because i dunno how tf else to not snake-eating-its-own-tail
     //i just can't figure out what, so
     //beenHit
     const makeBox = function(y,x, func){
         const newBox = document.createElement("div");
+        boxes.push(newBox);
         newBox.className = "box";
         newBox.addEventListener("click", () => { 
             const playerPiece = func(y,x);
@@ -182,6 +216,17 @@ const visualManager = (function () {
             }
         }
     }
+
+    const resetGrid = function(){
+        for(let i = 0; i < boxes.length; i++){
+            boxes[i].style['background-image'] = "";
+        }
+    }
+
+
+    const changeGameText = function(newText){
+        gameText.textContent = newText;
+    }
     
     //i don't LOVE doing this totally seperate from grid-construction but if im supposed to be keeping all visuals
     //in a hellscape quarantine from everything else i guess this is how do
@@ -189,7 +234,7 @@ const visualManager = (function () {
     
 
     //okay what if it literally just handles the visuals and EVERYTHING ELSE is prompted into it by manager
-    return{ makeGrid, };
+    return{ makeGrid, changeGameText, setupGame, resetGrid};
 }())
 
 
@@ -218,32 +263,15 @@ const turnManager = (function (){
     let turn = 0;
 
 
-    /*
-    const takeTurn = function() {
-        let x = Math.floor(Math.random() * 3);
-        let y = Math.floor(Math.random() * 3);
-    
-        
-        switch(gameBoard.fillCell(y,x,players[turn])){
-            case "win": 
-                console.log("player " + players[turn] + " win")
-                return;
-            case "tie":
-                console.log("tied");
-                return;
-            case "full":
-                takeTurn();
-                return;
-            default:
-                turn == 0 ? turn = 1 : turn = 0;
-                takeTurn();
-                return;
-        }
-    }
-    */
 
-    //starts the first turn
-    //takeTurn();
+
+    const gameStart = function(){
+        const playerNames = visualManager.setupGame();
+        players[0].playerName = playerNames[0];
+        players[1].playerName = playerNames[1];
+    }
+
+
     
 
 
@@ -251,19 +279,19 @@ const turnManager = (function (){
         if(gamePlaying){
             console.log(y + "," + x);
 
-            console.log(players[turn].tokenType);
-            //cellClicked now runs in the visualManager, when a click happens. and so needs to return what happened
-            //TO the visual manager, for a visual change
+            //console.log(players[turn].tokenType);
+            
     
-            //these seems to work except that for some reason when x wins a o appears
             switch(gameBoard.fillCell(y,x,players[turn].tokenType)){
                 case "win": 
-                    gamePlaying = false;
-                    console.log(players[turn].playerName + " win")
+                    //console.log(players[turn].playerName + " win")
+                    visualManager.changeGameText(players[turn].playerName + " wins!")
+                    endGame();
                     return players[turn].tokenImage;
                 case "tie":
-                    gamePlaying = false;
-                    console.log("tied");
+                    //console.log("tied");
+                    visualManager.changeGameText("Tie!");
+                    endGame();
                     return players[turn].tokenImage;
                 case "full":
                     //takeTurn();
@@ -280,33 +308,33 @@ const turnManager = (function (){
 
     const turnSwap = function(){
         turn == 0 ? turn = 1 : turn = 0;
-
+        visualManager.changeGameText(players[turn].playerName + "'s turn");
     }
 
 
+    //k i SHOULD put this with other visual stuff but i WANT TO BE DONE IM SORRY
+    //i wasn't thinking of a 'play again' so i SO didn't structure for that and i'm not stopping now forgive me
+    const playAgainButton = document.querySelector(".playAgainButton");
+    playAgainButton.addEventListener("click", () => gameReset())
+
+    const endGame = function(){
+
+        gamePlaying = false;
+        playAgainButton.style.display = "block";
+    }
+
+    const gameReset = function(){
+        gamePlaying = true;
+        turnSwap();
+        gameBoard.resetBoard();
+        visualManager.resetGrid();
+    }
+
     //i really hate how many different places y/x/clickFunc are being tossed through because it would be 
     //SO EASY TO GET A WIRE CROSSED
-    visualManager.makeGrid(gridSize, cellClicked)
+    visualManager.makeGrid(gridSize, cellClicked);
+
+    return{ gameStart }
 }())
 
 
-
-
-
-// let tNew = document.createElement("img");
-// test.forEach((box) => { 
-//     let tNew = document.createElement("img");
-//     tNew.src = "graphics/circle-blue.svg";
-//     box.appendChild(tNew);
-//  } );
-
-
- /*
- the visual things needs to be able to:
-
- -boxes need to be clickable when inhabited or not
-    (triggering the 'check and fill' process)
-    which means passing the coordinate information of where was clicked
-
- -if manager says that a click succeeded, create a visual for that box
- */

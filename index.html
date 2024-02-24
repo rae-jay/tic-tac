@@ -10,7 +10,19 @@
 <body>
     <div class="please"></div>
     <h1>Tic-Tac-Toe</h1>
-    <div class="gameBoard"> </div>
-    <h2 class="gameText">game text here</h2>
+    <div class="whenPlaying">
+        <div class="gameBoard"> </div>
+        <h2 class="gameText">game text here</h2>
+        <button class="playAgainButton" type="button">Play Again</button>
+    </div>
+    <form class="gameSetup" name="playerNames" action="javascript:;" method="post" onsubmit="turnManager.gameStart()">
+        <label for="playerOneName">Player 1's name: 
+            <input required type="text" id="playerOneName" name="p1Name">
+        </label>
+        <label for="playerTwoName">Player 2's name: 
+            <input required type="text" id="playerTwoName" name="p2Name">
+        </label>
+        <button>Start Game</button>
+    </form>
 </body>
 </html>
